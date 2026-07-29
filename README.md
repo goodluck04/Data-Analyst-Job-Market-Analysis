@@ -30,25 +30,39 @@ Each query for this project aimed at investigating specific aspects of the data 
 To identify the highest-paying roles, I filtered data analyst positions by average yearly salary and location, focusing on remote jobs. This query highlights the high paying opportunities in the field.
 
 ```sql
+WITH top_paying_jobs AS (
+    SELECT
+        jpf.job_id,
+        jpf.job_title,
+        jpf.salary_year_avg,
+        jpf.job_posted_date,
+        cd.name AS company_name
+
+    FROM job_postings_fact AS jpf
+
+    LEFT JOIN company_dim AS cd
+        ON jpf.company_id = cd.company_id
+
+    WHERE jpf.job_title_short = 'Data Analyst'
+        AND jpf.job_location = 'Anywhere'
+        AND jpf.salary_year_avg IS NOT NULL
+)
+
 SELECT
-    job_id,
-    job_title,
-    job_location,
-    job_schedule_type,
-    salary_year_avg,
-    job_posted_date,
-    -- specify company name
-    name AS company_name
-FROM
-    job_postings_fact
-    -- now we can also specify company name
-LEFT JOIN company_dim ON job_postings_fact.company_id = company_dim.company_id
-WHERE
-    job_title_short = 'Data Analyst' AND 
-    job_location = 'Anywhere' AND
-    salary_year_avg IS NOT NULL
+    tpj.*,
+    sd.skills
+
+FROM top_paying_jobs AS tpj
+
+INNER JOIN skills_job_dim AS sjd
+    ON tpj.job_id = sjd.job_id
+
+INNER JOIN skills_dim AS sd
+    ON sjd.skill_id = sd.skill_id
+
 ORDER BY
-    salary_year_avg DESC
+    tpj.salary_year_avg DESC
+
 LIMIT 10;
 ```
 Here's the breakdown of the top data analyst jobs in 2023:
